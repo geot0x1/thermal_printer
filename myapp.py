@@ -1,4 +1,5 @@
 from printer import ThermalPrinterEmulator
+from enum import Enum
 
 def openfile():
     with open("tymponogram.log", "rb") as f:
@@ -8,6 +9,7 @@ def openfile():
 if __name__ == '__main__':
     myfile = openfile()
     lines = myfile.split(b'\n')
+    lines = [line + b'\n' for line in lines] # Appending the \n
 
     printer = ThermalPrinterEmulator(width=480, height=800)
     printer.set_font_size(16)
@@ -16,10 +18,7 @@ if __name__ == '__main__':
     for line in lines:
         char_counter = 0
         for byte in line:
-            if byte >= 32 and byte < 127:
-                printer.draw_char(chr(byte))
-                char_counter += 1
-        printer.new_line()
+            printer.print(byte)
         # break
         
 
