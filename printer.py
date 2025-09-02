@@ -15,7 +15,7 @@ class ThermalPrinterEmulator:
             y = self.current_y
         draw = ImageDraw.Draw(self.page)
         try:
-            font = ImageFont.truetype("Courier_New.ttf", font_size)
+            font = ImageFont.truetype("CourierPrime-Regular.ttf", font_size)
         except IOError:
             font = ImageFont.load_default()
         draw.text((x, y), text, font=font, fill=0)
@@ -64,7 +64,7 @@ class ThermalPrinterEmulator:
         self.current_y = 0
 
 if __name__ == '__main__':
-    printer = ThermalPrinterEmulator(width=384, height=600)
+    printer = ThermalPrinterEmulator(width=480, height=800)
 
     # Use a loop to print characters and have the cursor advance automatically
     text = "Hello World! This is a test."
