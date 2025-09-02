@@ -1,57 +1,80 @@
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 class ThermalPrinterEmulator:
     def __init__(self, width=384, height=1000):
-        """
-        Initialize the emulator with a blank page.
-        width: pixels
-        height: pixels (can be tall for long receipts)
-        """
         self.width = width
         self.height = height
-        self.page = Image.new('1', (width, height), 1)  # '1' = 1-bit pixels, 1=white
-        self.current_y = 0  # tracks where to "print next"
+        self.page = Image.new('1', (width, height), 1)
+        self.current_x = 0
+        self.current_y = 0
 
-    def draw_pixel(self, x, y, color=0):
-        """
-        Set a single pixel on the page.
-        x, y: pixel coordinates
-        color: 0=black, 1=white
-        """
-        if 0 <= x < self.width and 0 <= y < self.height:
-            self.page.putpixel((x, y), color)
+    def draw_text(self, text, x=None, y=None, font_size=12):
+        if x is None:
+            x = self.current_x
+        if y is None:
+            y = self.current_y
+        draw = ImageDraw.Draw(self.page)
+        try:
+            font = ImageFont.truetype("Courier_New.ttf", font_size)
+        except IOError:
+            font = ImageFont.load_default()
+        draw.text((x, y), text, font=font, fill=0)
 
-    def draw_pixels(self, pixel_list):
-        """
-        Draw multiple pixels at once.
-        pixel_list: list of tuples (x, y, color)
-        """
-        for x, y, color in pixel_list:
-            self.draw_pixel(x, y, color)
+    def move_cursor(self, x=None, y=None):
+        if x is not None:
+            self.current_x = x
+        if y is not None:
+            self.current_y = y
+
+    def draw_char(self, char, x=None, y=None, font_size=12):
+        """Draw a single character and advance the cursor based on its width."""
+        if x is None:
+            x = self.current_x
+        if y is None:
+            y = self.current_y
+
+        draw = ImageDraw.Draw(self.page)
+        try:
+            font = ImageFont.truetype("CourierPrime-Regular.ttf", font_size)
+        except IOError:
+            font = ImageFont.load_default()
+
+        # Draw the character
+        draw.text((x, y), char, font=font, fill=0)
+
+        # Measure the width of the character
+        char_width = draw.textlength(char, font=font)
+
+        # Update the cursor position
+        self.move_cursor(x=self.current_x + char_width)
+
+    def new_line(self, line_height=16):
+        self.current_x = 0
+        self.current_y += line_height
+
+    def carriage_return(self):
+        self.current_x = 0
 
     def show(self):
-        """Display the current page"""
         self.page.show()
 
     def clear(self):
-        """Clear the page"""
         self.page.paste(1, [0, 0, self.width, self.height])
+        self.current_x = 0
+        self.current_y = 0
 
-# ---------------- Example usage ----------------
-printer = ThermalPrinterEmulator(width=384, height=600)
+if __name__ == '__main__':
+    printer = ThermalPrinterEmulator(width=384, height=600)
 
-# Draw a diagonal line
-for i in range(100):
-    printer.draw_pixel(i, i)
+    # Use a loop to print characters and have the cursor advance automatically
+    text = "Hello World! This is a test."
+    printer.move_cursor(y=10)
+    printer.draw_text(text, font_size=20)
 
-# Draw a small square
-for x in range(50, 70):
-    for y in range(20, 40):
-        printer.draw_pixel(x, y)
+    printer.new_line(line_height=40)
 
-# Draw custom pixels
-custom = [(x, 60, 0) for x in range(100, 120)]
-printer.draw_pixels(custom)
+    # Demonstrate automatic cursor movement
+    for i in "This demonstrates automatic cursor movement.":
+        printer.draw_char(i, font_size=16)
 
-# Show the page
-printer.show()
+    printer.show()
